@@ -16,18 +16,20 @@ def draw_maze(mazewin):
     mazewin.addstr(MAZE_HEIGHT, 0, "+" + "-" * MAZE_WIDTH + "+")
 
 def draw_stable(stablewin, stable):
-    categories = [("#", 2), ("NAME", 16)]
-    category_column = 0
+    categories = [("#", 2), ("NAME", 16), ("HEALTH", 7), ("MAX HEALTH", 11)]
+    category_columns = [0]
 
     stablewin.addstr(0, 0, " " * STABLE_WIDTH, curses.A_REVERSE)
 
-    for category in categories:
-        stablewin.addstr(0, category_column, category[0], curses.A_REVERSE)
-        category_column += category[1] + 1
+    for (n, category) in enumerate(categories):
+        stablewin.addstr(0, category_columns[n], category[0], curses.A_REVERSE)
+        category_columns.append(category_columns[n] + category[1] + 1)
 
     for (n, dude) in enumerate(stable):
-        stablewin.addstr(n + 1, 0, str(n + 1))
-        stablewin.addstr(n + 1, 3, dude.name)
+        stablewin.addstr(n + 1, category_columns[0], str(n + 1))
+        stablewin.addstr(n + 1, category_columns[1], dude.name)
+        stablewin.addstr(n + 1, category_columns[2], str(dude.health))
+        stablewin.addstr(n + 1, category_columns[3], str(dude.max_health))
 
     stablewin.refresh()
 
