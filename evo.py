@@ -19,9 +19,11 @@ def draw_stable(stablewin, stable):
     categories = [("#", 2), ("NAME", 16)]
     category_column = 0
 
+    stablewin.addstr(0, 0, " " * STABLE_WIDTH, curses.A_REVERSE)
+
     for category in categories:
         stablewin.addstr(0, category_column, category[0], curses.A_REVERSE)
-        category_column += category[1]
+        category_column += category[1] + 1
 
     for (n, dude) in enumerate(stable):
         stablewin.addstr(n + 1, 0, str(n + 1))
