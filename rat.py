@@ -1,3 +1,5 @@
+import random
+
 class rat:
     DEFAULT_MAX_HEALTH = 100
     DEFAULT_SNIFF_DISTANCE = 5
@@ -7,6 +9,7 @@ class rat:
     health = DEFAULT_MAX_HEALTH
     max_health = DEFAULT_MAX_HEALTH
     sniff_distance = DEFAULT_SNIFF_DISTANCE
+    direction = None
     row = 0
     col = 0
 
@@ -18,3 +21,4 @@ class rat:
         self.sniff_distance = sniff_distance
         self.row = row
         self.col = col
+        self.direction = random.randint(1, 8)

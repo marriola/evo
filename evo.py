@@ -11,7 +11,7 @@ import random
 ###############################################################################
 
 from rat import rat
-
+import direction
 
 ###############################################################################
 # CONSTANTS
@@ -42,10 +42,16 @@ def mutate(value, range):
 
 ###############################################################################
 
+def random_coordinate():
+    return (random.randint(0, MAZE_HEIGHT - 1), random.randint(0, MAZE_WIDTH))
+
+	
+###############################################################################
+
 def occupied(row, col):
     return maze[row][col] != ' '
 
-
+	
 ###############################################################################
 
 def load_maze():
@@ -70,7 +76,7 @@ def draw_maze(mazewin):
 ###############################################################################
 
 def draw_stable(stablewin, stable):
-    categories = [("#", 2), ("NAME", 10), ("HEALTH", 7), ("MAX HEALTH", 11), ("SNIFF", 6)]
+    categories = [("#", 2), ("NAME", 10), ("HEALTH", 7), ("MAX HEALTH", 11), ("SNIFF", 6), ("DIR", 3)]
     category_columns = [0]
 
     stablewin.addstr(0, 0, " " * STABLE_WIDTH, curses.A_REVERSE)
@@ -85,6 +91,7 @@ def draw_stable(stablewin, stable):
         stablewin.addstr(n + 1, category_columns[2], str(dude.health))
         stablewin.addstr(n + 1, category_columns[3], str(dude.max_health))
         stablewin.addstr(n + 1, category_columns[4], str(dude.sniff_distance))
+        stablewin.addstr(n + 1, category_columns[5], direction.names[dude.direction])
 
     stablewin.refresh()
 
@@ -93,14 +100,14 @@ def draw_stable(stablewin, stable):
 
 def setup_stable():
     # initialize stable
+
     for (color, name) in enumerate(RAT_NAMES):
-        row = random.randint(0, MAZE_HEIGHT)
-        col = random.randint(0, MAZE_WIDTH)
+        row, col = random_coordinate()
         stable.append(rat(color, row, col, name, mutate(rat.DEFAULT_MAX_HEALTH, 20), mutate(rat.DEFAULT_SNIFF_DISTANCE, 2)))
-        # don't really know why this doesn't work
-        # while occupied(row, col):
-        #     stable[len(stable) - 1].row = random.randint(0, MAZE_HEIGHT)
-        #     stable[len(stable) - 1].col = random.randint(0, MAZE_WIDTH)
+        while occupied(row, col):
+            row, col = random_coordinate()
+            stable[len(stable) - 1].row = row
+            stable[len(stable) - 1].col = col
 
 
 ###############################################################################
