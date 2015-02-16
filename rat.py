@@ -10,10 +10,11 @@ class rat:
     row = 0
     col = 0
 
-    def __init__(self, color, row, col, name, max_health):
+    def __init__(self, color, row, col, name, max_health, sniff_distance):
         self.color = color
         self.name = name
         self.health = max_health
         self.max_health = max_health
+        self.sniff_distance = sniff_distance
         self.row = row
         self.col = col

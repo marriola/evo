@@ -36,8 +36,15 @@ maze = []
 
 ###############################################################################
 
+def mutate(value, range):
+    return value + random.randint(-range, range)    
+
+
+###############################################################################
+
 def occupied(row, col):
     return maze[row][col] != ' '
+
 
 ###############################################################################
 
@@ -46,6 +53,7 @@ def load_maze():
     for line in maze_file:
         maze.append(line[1:-1])
     maze_file.close()
+
 
 ###############################################################################
 
@@ -58,10 +66,11 @@ def draw_maze(mazewin):
     for dude in stable:
         mazewin.addch(dude.row + 1, dude.col + 1, dude.name[0], curses.color_pair(dude.color))
 
+
 ###############################################################################
 
 def draw_stable(stablewin, stable):
-    categories = [("#", 2), ("NAME", 16), ("HEALTH", 7), ("MAX HEALTH", 11), ("SNIFF", 6)]
+    categories = [("#", 2), ("NAME", 10), ("HEALTH", 7), ("MAX HEALTH", 11), ("SNIFF", 6)]
     category_columns = [0]
 
     stablewin.addstr(0, 0, " " * STABLE_WIDTH, curses.A_REVERSE)
@@ -75,34 +84,41 @@ def draw_stable(stablewin, stable):
         stablewin.addstr(n + 1, category_columns[1], dude.name)
         stablewin.addstr(n + 1, category_columns[2], str(dude.health))
         stablewin.addstr(n + 1, category_columns[3], str(dude.max_health))
+        stablewin.addstr(n + 1, category_columns[4], str(dude.sniff_distance))
 
     stablewin.refresh()
 
 
 ###############################################################################
 
-def game_setup():
+def setup_stable():
+    # initialize stable
+    for (color, name) in enumerate(RAT_NAMES):
+        row = random.randint(0, MAZE_HEIGHT)
+        col = random.randint(0, MAZE_WIDTH)
+        stable.append(rat(color, row, col, name, mutate(rat.DEFAULT_MAX_HEALTH, 20), mutate(rat.DEFAULT_SNIFF_DISTANCE, 2)))
+        # don't really know why this doesn't work
+        # while occupied(row, col):
+        #     stable[len(stable) - 1].row = random.randint(0, MAZE_HEIGHT)
+        #     stable[len(stable) - 1].col = random.randint(0, MAZE_WIDTH)
+
+
+###############################################################################
+
+def setup_game():
     for n in range(0, 16):
         curses.init_pair(n + 1,
                          7 if (n + 1) % 8 == 0 else 0,
                          (n + 1) % 8)
 
     load_maze()
+    setup_stable()
 
-    # initialize stable
-    for (color, name) in enumerate(RAT_NAMES):
-        row = random.randint(0, MAZE_HEIGHT)
-        col = random.randint(0, MAZE_WIDTH)
-        stable.append(rat(color, row, col, name, rat.DEFAULT_MAX_HEALTH))
-        # don't really know why this doesn't work
-        # while occupied(row, col):
-        #     stable[len(stable) - 1].row = random.randint(0, MAZE_HEIGHT)
-        #     stable[len(stable) - 1].col = random.randint(0, MAZE_WIDTH)
 
 ###############################################################################
 
 def main(stdscr):
-    game_setup()
+    setup_game()
 
     stablewin = curses.newwin(STABLE_HEIGHT + 1, STABLE_WIDTH, 0, MAZE_WIDTH + 3)
     draw_stable(stablewin, stable)
