@@ -20,6 +20,8 @@ import direction
 # CONSTANTS
 ###############################################################################
 
+FOOD_COLOR = 32
+
 MAZE_WIDTH = 40
 MAZE_HEIGHT = 25
 
@@ -40,6 +42,7 @@ health_subtract_interval = 10
 
 stable = []
 maze = []
+food_locations = []
 
 stablewin = None
 
@@ -80,6 +83,9 @@ def draw_maze():
 
     for dude in stable:
         mazewin.addch(dude.row + 1, dude.col + 1, dude.name[0], curses.color_pair(dude.color))
+
+    for food_row, food_col in food_locations:
+        mazewin.addch(food_row + 1, food_col + 1, "&", curses.color_pair(FOOD_COLOR) + curses.A_BOLD)
 
     mazewin.refresh()
 
@@ -130,6 +136,8 @@ def setup_game():
                          7 if (n + 1) % 8 == 0 or (n + 1) % 8 == 4 else 0,
                          (n + 1) % 8)
 
+    curses.init_pair(FOOD_COLOR, curses.COLOR_WHITE, curses.COLOR_GREEN)
+
     load_maze()
     setup_stable()
 
@@ -167,6 +175,12 @@ def subtract_health():
         
 ###############################################################################
 
+def feed():
+    food_locations.append(random_coordinate())
+
+
+###############################################################################
+
 def game_loop():
     step = 0
 
@@ -182,6 +196,9 @@ def game_loop():
 
         if step % stable_update_interval == 0:
             draw_stable()
+
+        if step % feeding_interval == 0:
+            feed()
 
         
 ###############################################################################
