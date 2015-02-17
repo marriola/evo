@@ -14,8 +14,10 @@ class Rat:
     direction = None
     row = 0
     col = 0
+    generation = 0
 
     def __init__(self, color, row, col, name, max_health, health_decay, sniff_distance):
+        self.generation = 1
         self.color = color
         self.name = name
         self.health = max_health

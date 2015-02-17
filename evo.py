@@ -3,8 +3,9 @@
 ###############################################################################
 
 import curses
-from curses import wrapper
+import math
 import random
+import sys
 from time import sleep
 
 
@@ -35,6 +36,15 @@ HEALTH_SUBTRACT_INTERVAL = 10
 
 RAT_NAMES = ["Bonnie", "Clyde", "Zeke", "Biff", "Randy", "Jax", "Walter", "Gale", "Nova", "Boof", "Sam", "Huell"]
 NUM_INITIAL_RATS = 5
+
+OFFSET_TO_DIRECTION = { (-1, -1): direction.UPLEFT,
+                        (-1, 0): direction.UP,
+                        (-1, 1): direction.UPRIGHT,
+                        (1, 1): direction.DOWNRIGHT,
+                        (1, 0): direction.DOWN,
+                        (1, -1): direction.DOWNLEFT,
+                        (0, 1): direction.RIGHT,
+                        (0, -1): direction.LEFT }
 
 ###############################################################################
 # GAME STATE
@@ -79,7 +89,7 @@ def load_maze():
 ###############################################################################
 
 def draw_maze():
-    mazewin.addstr(0, 0, "+" + "-" * (MAZE_WIDTH - 1) + "+");
+    #mazewin.addstr(0, 0, "+" + "-" * (MAZE_WIDTH - 1) + "+");
     for n in range(0, MAZE_HEIGHT):
         mazewin.addstr(n + 1, 0, "|" + maze[n] + "|")
     mazewin.addstr(MAZE_HEIGHT + 1, 0, "+" + "-" * (MAZE_WIDTH - 1) + "+")
@@ -96,7 +106,7 @@ def draw_maze():
 ###############################################################################
 
 def draw_stable():
-    categories = [("#", 2), ("NAME", 10), ("HEALTH", 7), ("MAX HEALTH", 11), ("SNIFF", 6), ("DIR", 3)]
+    categories = [("#", 2), ("GEN", 4), ("NAME", 10), ("HEALTH", 7), ("SNIFF", 6), ("DIR", 3)]
     category_columns = [0]
 
     stablewin.addstr(0, 0, " " * STABLE_WIDTH, curses.A_REVERSE)
@@ -108,9 +118,9 @@ def draw_stable():
     for (n, dude) in enumerate(stable):
         stablewin.addstr(n + 1, 0, " " * STABLE_WIDTH)
         stablewin.addstr(n + 1, category_columns[0], str(n + 1), curses.color_pair(dude.color))
-        stablewin.addstr(n + 1, category_columns[1], dude.name)
-        stablewin.addstr(n + 1, category_columns[2], str(dude.health))
-        stablewin.addstr(n + 1, category_columns[3], str(dude.max_health))
+        stablewin.addstr(n + 1, category_columns[1], str(dude.generation))
+        stablewin.addstr(n + 1, category_columns[2], dude.name)
+        stablewin.addstr(n + 1, category_columns[3], str(dude.health) + "/" + str(dude.max_health))
         stablewin.addstr(n + 1, category_columns[4], str(dude.sniff_distance))
         stablewin.addstr(n + 1, category_columns[5], direction.names[dude.direction])
 
@@ -147,12 +157,54 @@ def setup_game():
 
 ###############################################################################
 
+def sense_food(dude):
+    def sign(num):
+        return 0 if num == 0 else num / abs(num)
+
+    # define area to sniff for food
+    row_start = dude.row - dude.sniff_distance
+    col_start = dude.col - dude.sniff_distance
+    row_end = dude.row + dude.sniff_distance
+    col_end = dude.col + dude.sniff_distance
+
+    if row_start < 0:
+        row_start = 0
+    if row_end >= MAZE_HEIGHT:
+        row_end = MAZE_HEIGHT - 1
+    if col_start < 0:
+        col_start = 0
+    if col_end >= MAZE_WIDTH:
+        col_end = MAZE_WIDTH - 1
+
+    # scan immediate vicinity for food, keeping track of the nearest piece of food
+    food_in_range = []
+    closest = (sys.maxint, -1, -1)
+
+    for row in range(row_start, row_end + 1):
+        for col in range(col_start, col_end + 1):
+            if (row, col) in food_locations:
+                distance = math.sqrt(math.pow(dude.row - row, 2) + math.pow(dude.col - col, 2))
+                if distance < closest[0]:
+                    closest = (distance, row, col)
+
+    if closest[0] < sys.maxint:
+        food_offset = (sign(closest[1] - dude.row), sign(closest[2] - dude.col))
+        return None if food_offset == (0, 0) else OFFSET_TO_DIRECTION[food_offset]
+    else:
+        return None
+
+###############################################################################
+
 def move_rat(dude):
     newrow, newcol = direction.project(dude.row, dude.col, dude.direction, 1, MAZE_HEIGHT, MAZE_WIDTH)
     if occupied(newrow, newcol):
         dude.direction = random.randint(1, 8)
     else:
         dude.row, dude.col = newrow, newcol
+
+    food_direction = sense_food(dude)
+    if food_direction != None:
+        dude.direction = food_direction
 
     for food_row, food_col in food_locations:
         if dude.row == food_row and dude.col == food_col:
@@ -238,4 +290,4 @@ def main(stdscr):
     
 ###############################################################################
 
-wrapper(main)
+curses.wrapper(main)
