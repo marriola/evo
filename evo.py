@@ -21,12 +21,17 @@ import direction
 ###############################################################################
 
 FOOD_COLOR = 32
+FOOD_VALUE = 15
 
 MAZE_WIDTH = 40
 MAZE_HEIGHT = 25
 
 STABLE_WIDTH = 80
 STABLE_HEIGHT = 25
+
+STABLE_UPDATE_INTERVAL = 5
+FEEDING_INTERVAL = 20
+HEALTH_SUBTRACT_INTERVAL = 10
 
 RAT_NAMES = ["Bonnie", "Clyde", "Zeke", "Biff", "Randy", "Jax", "Walter", "Gale", "Nova", "Boof", "Sam", "Huell"]
 NUM_INITIAL_RATS = 5
@@ -36,9 +41,7 @@ NUM_INITIAL_RATS = 5
 ###############################################################################
 
 step_delay = 0.1
-stable_update_interval = 5
-feeding_interval = 10
-health_subtract_interval = 10
+step = 0
 
 stable = []
 maze = []
@@ -144,13 +147,37 @@ def setup_game():
 
 ###############################################################################
 
+def move_rat(dude):
+    newrow, newcol = direction.project(dude.row, dude.col, dude.direction, 1, MAZE_HEIGHT, MAZE_WIDTH)
+    if occupied(newrow, newcol):
+        dude.direction = random.randint(1, 8)
+    else:
+        dude.row, dude.col = newrow, newcol
+
+    for food_row, food_col in food_locations:
+        if dude.row == food_row and dude.col == food_col:
+            food_locations.remove((food_row, food_col))
+            dude.health += FOOD_VALUE
+
+
+###############################################################################
+
 def game_step():
+    global step
+
     for dude in stable:
-        newrow, newcol = direction.project(dude.row, dude.col, dude.direction, 1, MAZE_HEIGHT, MAZE_WIDTH)
-        if occupied(newrow, newcol):
-            dude.direction = random.randint(1, 8)
-        else:
-            dude.row, dude.col = newrow, newcol
+        move_rat(dude)
+
+    step += 1
+
+    if step % HEALTH_SUBTRACT_INTERVAL == 0:
+        subtract_health()
+
+    if step % STABLE_UPDATE_INTERVAL == 0:
+        draw_stable()
+
+    if step % FEEDING_INTERVAL == 0:
+        feed()
 
         
 ###############################################################################
@@ -176,29 +203,21 @@ def subtract_health():
 ###############################################################################
 
 def feed():
-    food_locations.append(random_coordinate())
+    row, col = random_coordinate()
+    while (occupied(row, col)):
+        row, col = random_coordinate()
+    
+    food_locations.append((row, col))
 
 
 ###############################################################################
 
 def game_loop():
-    step = 0
 
     while poll_keyboard():
         sleep(step_delay)
         game_step()
         draw_maze()
-
-        step += 1
-
-        if step % health_subtract_interval == 0:
-            subtract_health()
-
-        if step % stable_update_interval == 0:
-            draw_stable()
-
-        if step % feeding_interval == 0:
-            feed()
 
         
 ###############################################################################
