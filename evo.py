@@ -12,7 +12,7 @@ from time import sleep
 # LOCAL IMPORTS
 ###############################################################################
 
-from rat import rat
+from rat import Rat
 import direction
 
 
@@ -27,16 +27,21 @@ STABLE_WIDTH = 80
 STABLE_HEIGHT = 25
 
 RAT_NAMES = ["Bonnie", "Clyde", "Zeke", "Biff", "Randy", "Jax", "Walter", "Gale", "Nova", "Boof", "Sam", "Huell"]
-
+NUM_INITIAL_RATS = 5
 
 ###############################################################################
 # GAME STATE
 ###############################################################################
 
 step_delay = 0.1
+stable_update_interval = 5
+feeding_interval = 10
+health_subtract_interval = 10
+
 stable = []
 maze = []
 
+stablewin = None
 
 ###############################################################################
 
@@ -67,7 +72,7 @@ def load_maze():
 
 ###############################################################################
 
-def draw_maze(mazewin):
+def draw_maze():
     mazewin.addstr(0, 0, "+" + "-" * (MAZE_WIDTH - 1) + "+");
     for n in range(0, MAZE_HEIGHT):
         mazewin.addstr(n + 1, 0, "|" + maze[n] + "|")
@@ -81,7 +86,7 @@ def draw_maze(mazewin):
 
 ###############################################################################
 
-def draw_stable(stablewin, stable):
+def draw_stable():
     categories = [("#", 2), ("NAME", 10), ("HEALTH", 7), ("MAX HEALTH", 11), ("SNIFF", 6), ("DIR", 3)]
     category_columns = [0]
 
@@ -92,6 +97,7 @@ def draw_stable(stablewin, stable):
         category_columns.append(category_columns[n] + category[1] + 1)
 
     for (n, dude) in enumerate(stable):
+        stablewin.addstr(n + 1, 0, " " * STABLE_WIDTH)
         stablewin.addstr(n + 1, category_columns[0], str(n + 1), curses.color_pair(dude.color))
         stablewin.addstr(n + 1, category_columns[1], dude.name)
         stablewin.addstr(n + 1, category_columns[2], str(dude.health))
@@ -107,9 +113,9 @@ def draw_stable(stablewin, stable):
 def setup_stable():
     # initialize stable
 
-    for (color, name) in enumerate(RAT_NAMES):
+    for n in range(NUM_INITIAL_RATS):
         row, col = random_coordinate()
-        stable.append(rat(color, row, col, name, mutate(rat.DEFAULT_MAX_HEALTH, 20), mutate(rat.DEFAULT_SNIFF_DISTANCE, 2)))
+        stable.append(Rat(n, row, col, RAT_NAMES[n], mutate(Rat.DEFAULT_MAX_HEALTH, 20), mutate(Rat.DEFAULT_SNIFF_DISTANCE, 2), mutate(Rat.DEFAULT_HEALTH_DECAY, 2)))
         while occupied(row, col):
             row, col = random_coordinate()
             stable[len(stable) - 1].row = row
@@ -121,7 +127,7 @@ def setup_stable():
 def setup_game():
     for n in range(0, 16):
         curses.init_pair(n + 1,
-                         7 if (n + 1) % 8 == 0 else 0,
+                         7 if (n + 1) % 8 == 0 or (n + 1) % 8 == 4 else 0,
                          (n + 1) % 8)
 
     load_maze()
@@ -141,41 +147,57 @@ def game_step():
         
 ###############################################################################
 
-def poll_keyboard(mazewin):
+def poll_keyboard():
     ch = mazewin.getch()
     if ch == 27:
         return False
 
     return True
 
+
+###############################################################################
+
+def subtract_health():
+    for dude in stable:
+        dude.health -= dude.health_decay
+        if dude.health < 0:
+            stablewin.addstr(len(stable), 0, " " * STABLE_WIDTH)
+            stable.remove(dude)
+
         
 ###############################################################################
 
-def game_loop(mazewin, stablewin):
+def game_loop():
     step = 0
 
-    while poll_keyboard(mazewin):
+    while poll_keyboard():
         sleep(step_delay)
         game_step()
-        draw_maze(mazewin)
+        draw_maze()
 
         step += 1
-        if step == 5:
-            draw_stable(stablewin, stable)
-            step = 0
+
+        if step % health_subtract_interval == 0:
+            subtract_health()
+
+        if step % stable_update_interval == 0:
+            draw_stable()
 
         
 ###############################################################################
 
 def main(stdscr):
+    global stablewin
+    global mazewin
+
     setup_game()
 
     stablewin = curses.newwin(STABLE_HEIGHT + 1, STABLE_WIDTH, 0, MAZE_WIDTH + 3)
     mazewin = curses.newwin(MAZE_HEIGHT + 3, MAZE_WIDTH + 2, 0, 0)
 
     mazewin.nodelay(True)
-    draw_stable(stablewin, stable)
-    game_loop(mazewin, stablewin)
+    draw_stable()
+    game_loop()
 
     
 ###############################################################################

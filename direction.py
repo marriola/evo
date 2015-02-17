@@ -11,13 +11,13 @@ DOWNLEFT = 6
 LEFT = 7
 UPLEFT = 8
 
-names = { UP: "U",
+names = { UP: "U ",
           UPRIGHT: "UR",
-          RIGHT: "R",
+          RIGHT: " R",
           DOWNRIGHT: "DR",
           DOWN: "D",
           DOWNLEFT: "DL",
-          LEFT: "L",
+          LEFT: " L",
           UPLEFT: "UL" }
 		 
 			   
