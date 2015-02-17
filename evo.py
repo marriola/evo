@@ -34,7 +34,6 @@ STABLE_UPDATE_INTERVAL = 5
 FEEDING_INTERVAL = 20
 HEALTH_SUBTRACT_INTERVAL = 10
 
-RAT_NAMES = ["Bonnie", "Clyde", "Zeke", "Biff", "Randy", "Jax", "Walter", "Gale", "Nova", "Boof", "Sam", "Huell"]
 NUM_INITIAL_RATS = 5
 
 OFFSET_TO_DIRECTION = { (-1, -1): direction.UPLEFT,
@@ -82,17 +81,17 @@ def occupied(row, col):
 def load_maze():
     maze_file = open("maze", "r")
     for line in maze_file:
-        maze.append(line[1:-1])
+        maze.append(" " * 40) #line[1:-1])
     maze_file.close()
 
 
 ###############################################################################
 
 def draw_maze():
-    #mazewin.addstr(0, 0, "+" + "-" * (MAZE_WIDTH - 1) + "+");
+    mazewin.addstr(0, 0, "+" + "-" * MAZE_WIDTH + "+");
     for n in range(0, MAZE_HEIGHT):
         mazewin.addstr(n + 1, 0, "|" + maze[n] + "|")
-    mazewin.addstr(MAZE_HEIGHT + 1, 0, "+" + "-" * (MAZE_WIDTH - 1) + "+")
+    mazewin.addstr(MAZE_HEIGHT + 1, 0, "+" + "-" * MAZE_WIDTH + "+")
 
     for dude in stable:
         mazewin.addch(dude.row + 1, dude.col + 1, dude.name[0], curses.color_pair(dude.color))
@@ -134,7 +133,7 @@ def setup_stable():
 
     for n in range(NUM_INITIAL_RATS):
         row, col = random_coordinate()
-        stable.append(Rat(n, row, col, RAT_NAMES[n], mutate(Rat.DEFAULT_MAX_HEALTH, 20), mutate(Rat.DEFAULT_SNIFF_DISTANCE, 2), mutate(Rat.DEFAULT_HEALTH_DECAY, 2)))
+        stable.append(Rat(n, row, col, Rat.NAMES[n], mutate(Rat.DEFAULT_MAX_HEALTH, 20), 1, mutate(Rat.DEFAULT_SNIFF_DISTANCE, 2)))
         while occupied(row, col):
             row, col = random_coordinate()
             stable[len(stable) - 1].row = row
@@ -187,11 +186,13 @@ def sense_food(dude):
                 if distance < closest[0]:
                     closest = (distance, row, col)
 
+    # return the direction to go to get to the nearest food
     if closest[0] < sys.maxint:
         food_offset = (sign(closest[1] - dude.row), sign(closest[2] - dude.col))
         return None if food_offset == (0, 0) else OFFSET_TO_DIRECTION[food_offset]
     else:
         return None
+
 
 ###############################################################################
 
@@ -210,6 +211,8 @@ def move_rat(dude):
         if dude.row == food_row and dude.col == food_col:
             food_locations.remove((food_row, food_col))
             dude.health += FOOD_VALUE
+            if dude.health >= dude.max_health:
+                stable.append(dude.reproduce())
 
 
 ###############################################################################
