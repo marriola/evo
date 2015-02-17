@@ -152,11 +152,17 @@ def poll_keyboard(mazewin):
 ###############################################################################
 
 def game_loop(mazewin, stablewin):
-	while poll_keyboard(mazewin):
-		sleep(step_delay)
-		game_step()
-		draw_stable(stablewin, stable)
-		draw_maze(mazewin)
+    step = 0
+
+    while poll_keyboard(mazewin):
+        sleep(step_delay)
+        game_step()
+        draw_maze(mazewin)
+
+        step += 1
+        if step == 5:
+            draw_stable(stablewin, stable)
+            step = 0
 
         
 ###############################################################################
@@ -168,6 +174,7 @@ def main(stdscr):
     mazewin = curses.newwin(MAZE_HEIGHT + 3, MAZE_WIDTH + 2, 0, 0)
 
     mazewin.nodelay(True)
+    draw_stable(stablewin, stable)
     game_loop(mazewin, stablewin)
 
     
