@@ -11,31 +11,31 @@ DOWNLEFT = 6
 LEFT = 7
 UPLEFT = 8
 
-names= { UP: "U",
-         UPRIGHT: "UR",
-         RIGHT: "R",
-         DOWNRIGHT: "DR",
-         DOWN: "D",
-         DOWNLEFT: "DL",
-         LEFT: "L",
-         UPLEFT: "UL" }
+names = { UP: "U",
+          UPRIGHT: "UR",
+          RIGHT: "R",
+          DOWNRIGHT: "DR",
+          DOWN: "D",
+          DOWNLEFT: "DL",
+          LEFT: "L",
+          UPLEFT: "UL" }
 		 
 			   
 ###############################################################################
 
-def project(coord, dir, distance):
+def project(row, col, dir, distance, MAZE_HEIGHT, MAZE_WIDTH):
 	if dir in (UP, UPLEFT, UPRIGHT):
-		coord[0] -= distance
+		row -= distance
 
 	if dir in (DOWN, DOWNLEFT, DOWNRIGHT):
-		coord[0] += distance
+		row += distance
 
 	if dir in (UPLEFT, LEFT, DOWNLEFT):
-		coord[1] -= distance
+		col -= distance
 
 	if dir in (UPRIGHT, RIGHT, DOWNRIGHT):
-		coord[1] += distance
+		col += distance
 
-	return coord
+	return (row, col)
 
 	

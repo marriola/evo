@@ -5,6 +5,8 @@
 import curses
 from curses import wrapper
 import random
+from time import sleep
+
 
 ###############################################################################
 # LOCAL IMPORTS
@@ -12,6 +14,7 @@ import random
 
 from rat import rat
 import direction
+
 
 ###############################################################################
 # CONSTANTS
@@ -30,6 +33,7 @@ RAT_NAMES = ["Bonnie", "Clyde", "Zeke", "Biff", "Randy", "Jax", "Walter", "Gale"
 # GAME STATE
 ###############################################################################
 
+step_delay = 0.1
 stable = []
 maze = []
 
@@ -49,7 +53,7 @@ def random_coordinate():
 ###############################################################################
 
 def occupied(row, col):
-    return maze[row][col] != ' '
+    return row < 0 or row >= MAZE_HEIGHT - 1 or col < 0 or col >= MAZE_WIDTH - 1 or maze[row][col] != ' '
 
 	
 ###############################################################################
@@ -71,6 +75,8 @@ def draw_maze(mazewin):
 
     for dude in stable:
         mazewin.addch(dude.row + 1, dude.col + 1, dude.name[0], curses.color_pair(dude.color))
+
+    mazewin.refresh()
 
 
 ###############################################################################
@@ -124,19 +130,47 @@ def setup_game():
 
 ###############################################################################
 
+def game_step():
+    for dude in stable:
+        newrow, newcol = direction.project(dude.row, dude.col, dude.direction, 1, MAZE_HEIGHT, MAZE_WIDTH)
+        if occupied(newrow, newcol):
+            dude.direction = random.randint(1, 8)
+        else:
+            dude.row, dude.col = newrow, newcol
+
+        
+###############################################################################
+
+def poll_keyboard(mazewin):
+    ch = mazewin.getch()
+    if ch == 27:
+        return False
+
+    return True
+
+        
+###############################################################################
+
+def game_loop(mazewin, stablewin):
+	while poll_keyboard(mazewin):
+		sleep(step_delay)
+		game_step()
+		draw_stable(stablewin, stable)
+		draw_maze(mazewin)
+
+        
+###############################################################################
+
 def main(stdscr):
     setup_game()
 
     stablewin = curses.newwin(STABLE_HEIGHT + 1, STABLE_WIDTH, 0, MAZE_WIDTH + 3)
-    draw_stable(stablewin, stable)
-
     mazewin = curses.newwin(MAZE_HEIGHT + 3, MAZE_WIDTH + 2, 0, 0)
-    draw_maze(mazewin)
 
-    mazewin.refresh()
-    mazewin.getkey()
+    mazewin.nodelay(True)
+    game_loop(mazewin, stablewin)
 
-
+    
 ###############################################################################
 
 wrapper(main)
